@@ -1,6 +1,6 @@
 import os
 import json
-from typing import Optional, List
+from typing import Optional, List, Any, Dict
 
 import requests
 from fastapi import FastAPI, HTTPException
@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
 
+# --------- CONFIG ---------
 
 MP_API_KEY = os.getenv("MP_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -19,49 +20,45 @@ if not OPENAI_API_KEY:
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-app = FastAPI()
+MP_BASE_URL = "https://api.materialsproject.org"
 
-# TODO: change this to your real GitHub Pages URL when you know it
-FRONTEND_ORIGIN = "https://gsopas.github.io/materials-explainer-frontend/"
+FRONTEND_ORIGIN = "https://gsopas.github.io"
+
+# --------- APP ---------
+
+app = FastAPI(title="Materials Explainer API", version="1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_ORIGIN, "https://gsopas.github.io/materials-explainer-frontend/"],
+    allow_origins=[FRONTEND_ORIGIN, "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ---------- Models ----------
+# --------- MODELS ---------
 
 class MaterialsQuery(BaseModel):
     chemsys: Optional[str] = None
     formula: Optional[str] = None
     limit: int = 20
 
-
 class ExplainRequest(BaseModel):
     raw_data: dict
     question: Optional[str] = None
 
+# --------- HELPERS ---------
 
-# ---------- Helpers for Materials Project ----------
-
-MP_BASE_URL = "https://api.materialsproject.org"
-
-
-def mp_request(endpoint: str, params: dict) -> dict:
+def mp_request(endpoint: str, params: Dict[str, Any]) -> List[dict]:
     headers = {"X-API-KEY": MP_API_KEY}
     url = f"{MP_BASE_URL}{endpoint}"
     r = requests.get(url, params=params, headers=headers, timeout=20)
     if not r.ok:
         raise HTTPException(status_code=r.status_code, detail=r.text)
     data = r.json()
-    # MP v2 wraps response in {"data": [...]}
     if "data" not in data:
         raise HTTPException(status_code=500, detail="Unexpected response from Materials Project")
     return data["data"]
-
 
 def search_by_chemsys(chemsys: str, limit: int = 20) -> List[dict]:
     params = {
@@ -74,7 +71,6 @@ def search_by_chemsys(chemsys: str, limit: int = 20) -> List[dict]:
     }
     return mp_request("/materials/summary/", params)
 
-
 def search_by_formula(formula: str, limit: int = 20) -> List[dict]:
     params = {
         "formula": formula,
@@ -86,13 +82,15 @@ def search_by_formula(formula: str, limit: int = 20) -> List[dict]:
     }
     return mp_request("/materials/summary/", params)
 
-
-# ---------- API endpoints ----------
+# --------- ROUTES ---------
 
 @app.get("/")
-def health():
+def root():
     return {"status": "ok", "message": "Materials Explainer backend running"}
 
+@app.get("/healthz")
+def healthz():
+    return {"ok": True}
 
 @app.post("/api/materials")
 def get_materials(q: MaterialsQuery):
@@ -108,7 +106,6 @@ def get_materials(q: MaterialsQuery):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.post("/api/explain")
 def explain_material(req: ExplainRequest):
@@ -142,4 +139,3 @@ def explain_material(req: ExplainRequest):
 
     answer = completion.choices[0].message.content
     return {"answer": answer}
-
