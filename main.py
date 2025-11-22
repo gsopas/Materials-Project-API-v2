@@ -64,21 +64,14 @@ def search_by_chemsys(chemsys: str, limit: int = 20) -> List[dict]:
     params = {
         "chemsys": chemsys,
         
-        "fields": (
-            "material_id,formula_pretty,chemsys,band_gap,density,"
-            "is_stable,energy_above_hull,nelements"
-        ),
+        
     }
     return mp_request("/materials/summary/", params)
 
 def search_by_formula(formula: str, limit: int = 20) -> List[dict]:
     params = {
         "formula": formula,
-        "limit": limit,
-        "fields": (
-            "material_id,formula_pretty,chemsys,band_gap,density,"
-            "is_stable,energy_above_hull,nelements"
-        ),
+        
     }
     return mp_request("/materials/summary/", params)
 
