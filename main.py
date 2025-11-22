@@ -63,7 +63,7 @@ def mp_request(endpoint: str, params: Dict[str, Any]) -> List[dict]:
 def search_by_chemsys(chemsys: str, limit: int = 20) -> List[dict]:
     params = {
         "chemsys": chemsys,
-        "limit": limit,
+        
         "fields": (
             "material_id,formula_pretty,chemsys,band_gap,density,"
             "is_stable,energy_above_hull,nelements"
