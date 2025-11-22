@@ -22,11 +22,11 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 app = FastAPI()
 
 # TODO: change this to your real GitHub Pages URL when you know it
-FRONTEND_ORIGIN = "https://YOUR-GITHUB-USERNAME.github.io"
+FRONTEND_ORIGIN = "https://gsopas.github.io/materials-explainer-frontend/"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_ORIGIN, "http://localhost:5173"],
+    allow_origins=[FRONTEND_ORIGIN, "https://gsopas.github.io/materials-explainer-frontend/"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
