@@ -3,4 +3,4 @@ uvicorn
 requests
 openai
 python-dotenv
-
+mp-api
